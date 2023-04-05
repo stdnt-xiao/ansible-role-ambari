@@ -1,4 +1,4 @@
-# Ambari+MGR-Mysql Ansible集群一键安装脚本
+# 基于Ansible离线部署Ambari集群
 
 ## 一、简介
 
@@ -22,11 +22,14 @@
 
 - 本脚本仅在`Ubuntu 18.04`系统上测试过，请确保安装的服务器为`Ubuntu 18.04`。
 
-## 三、部署方法
+## 三、外网构建私有化部署软件
+
+
+## 四、私有化部署方法
 
 本案例部署主机IP为`192.168.26.192、192.168.26.193、192.168.26.194`，以下步骤请按照自己实际情况更改。
 
-### 3.1 安装前设置
+### 4.1 安装前设置
 ```bash
 ### 安装ansible
 $ sh /opt/download/ansible/install_ansible.sh
@@ -34,77 +37,49 @@ $ sh /opt/download/ansible/install_ansible.sh
 ### 配置免密
 $ sh ansible-playbook /opt/download/bigdata/playbooks/all.yml
 ```
-### 3.2 部署linkis+dss
+### 4.2 部署linkis+dss
 
 ```bash
 ### 获取安装包
-$ git clone https://github.com/wubolive/dss-linkis-ansible.git
-$ cd dss-linkis-ansible
+$ git clone https://github.com/stdnt-xiao/ansible-role-ambari.git
+$ cd ansible-role-ambari
+```
 
-### 目录说明
-dss-linkis-ansible
-├── ansible.cfg    # ansible 配置文件
-├── hosts          # hosts主机及变量配置
-├── playbooks      # playbooks剧本
-├── README.md      # 说明文档
-└── roles          # 角色配置
+### 4.3 目录说明
+ansible-role-ambari
+├── ansible    # ansible 配置文件
+├── bigdata    # 大数据主机及变量配置
+├── hdp        # hdp资源文件（手动下载HDP-3.1.0.0-ubuntu18-deb.tar.gz、HDP-UTILS-1.1.0.22-ubuntu18.tar.gz放到/opt/download/hdp目录）
+├── README.md  # 说明文档
 
-### 配置部署主机（注：ansible_ssh_host的值不能设置127.0.0.1）
+### 4.4 配置部署主机（注：ansible_ssh_host的值不能设置127.0.0.1）
+```bash
 $ vim hosts
 [deploy]
-dss-service ansible_ssh_host=192.168.1.52 ansible_ssh_port=22
-
-### 下载安装包到download目录(如果下载失败，可以手动下载放到该目录)
-$ ansible-playbook playbooks/download.yml
-
-### 一键安装Linkis+DSS
+node01 ansible_ssh_host=192.168.26.192 ansible_ssh_port=22
+```
+### 4.5 下载安装包到download目录(如果下载失败，可以手动下载放到该目录)
+```bash
+$ cd /opt/download/bigdata
 $ ansible-playbook playbooks/all.yml
-......
+```
+```
 TASK [dss : 打印访问信息] *****************************************************************************************
-ok: [dss-service] => {
+ok: [node01] => {
     "msg": [
         "*****************************************************************", 
-        "              访问 http://192.168.1.52 查看访问信息                 ", 
+        "              访问 http://192.168.26.192:8080 查看访问信息                 ", 
         "*****************************************************************"
     ]
 }
-
 ```
+执行结束后，即可访问：http://192.168.26.192:8080 查看信息页面，上面记录了所有服务的访问地址及账号密码。
 
-执行结束后，即可访问：http://192.168.1.52 查看信息页面，上面记录了所有服务的访问地址及账号密码。
-
-![image](https://user-images.githubusercontent.com/31678260/209619054-b776a4e6-2044-4855-8185-e57a269d2306.png)
-
-### 3.3 部署其它服务
-
+### 4.6 维护指南
 ```bash
-# 安装dolphinscheduler
-$ ansible-playbook playbooks/dolphinscheduler.yml
-### 注: 安装以下服务必须优先安装dolphinscheduler调度系统
-# 安装visualis
-$ ansible-playbook playbooks/visualis.yml 
-# 安装qualitis
-$ ansible-playbook playbooks/qualitis.yml
-# 安装streamis
-$ ansible-playbook playbooks/streamis.yml
-# 安装exchangis
-$ ansible-playbook playbooks/exchangis.yml
-```
-### 3.4 维护指南
-```
 ### 查看实时日志
-$ su - hadoop
-$ tail -f ~/linkis/logs/*.log ~/dss/logs/*.log
 
 ### 启动服务（如服务器重启可使用此命令一建启动）
 $ ansible-playbook playbooks/all.yml -t restart
 # 启动其它服务
-$ sh /usr/local/zookeeper/bin/zkServer.sh start
-$ su - hadoop
-$ cd /opt/dolphinscheduler/bin &&  sh start-all.sh 
-$ cd /opt/visualis-server/bin && sh start-visualis-server.sh
-$ cd /opt/qualitis/bin/ && sh start.sh
-$ cd /opt/streamis/streamis-server/bin/ && sh start-streamis-server.sh
-$ cd /opt/exchangis/sbin/ && ./daemon.sh start server
 ```
-使用问题请访问官方QA文档：https://docs.qq.com/doc/DSGZhdnpMV3lTUUxq
