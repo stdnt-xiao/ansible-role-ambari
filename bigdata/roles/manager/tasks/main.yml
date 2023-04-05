@@ -1,0 +1,106 @@
+---
+#TODO
+#yarn 53端口冲突
+#https://archive.cloudera.com/p/HDP 域名屏蔽
+- name: 添加hdp apt认证文件
+  copy:
+    src: trusted.gpg
+    dest: /etc/apt/trusted.gpg
+
+- name: 创建download文件夹
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/download/hdp
+    - /opt/repo
+
+- name: 拷贝hdp镜像源资源到其他节点
+  copy:
+    src: "{{ item }}"
+    dest: /opt/download/hdp/
+  with_items:
+    - /opt/download/hdp/HDP-3.1.0.0-ubuntu18-deb.tar.gz
+    - /opt/download/hdp/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
+  when:
+    - STATE != "MASTER"
+
+- name: 配置 ambari hdp镜像源
+  shell:
+    cmd: "{{ item }}"
+  with_items:
+    - tar -zxvf /opt/download/hdp/HDP-3.1.0.0-ubuntu18-deb.tar.gz -C /opt/repo/
+    - tar -zxvf /opt/download/hdp/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
+
+- name: 添加ambari password.dat文件
+  template: src=nginx.hdp.conf.j2 dest=/etc/nginx/conf.d/hdp.conf owner=root
+
+- name: 配置 ambari hdp镜像源
+  shell:
+    cmd: nginx -s reload
+
+- name: 解压ambari安装包
+  unarchive:
+    src: ambari.debs.tar.gz
+    dest: /opt/debs/
+
+- name: 配置环境变量
+  lineinfile:
+    dest: /etc/apt/sources.list.d/local.list
+    state: present
+    line: "deb [trusted=yes] file:/opt/debs ambari/"
+
+- name: 安装ambari
+  shell:
+    cmd: apt-get update && apt-get install -y ambari-server ambari-agent
+
+- name: 修改ambari app.js文件,解决ambari-hdp源为空的问题
+  #https://community.cloudera.com/t5/Community-Articles/ambari-2-7-3-Ambari-writes-Empty-baseurl-values-written-to/ta-p/249314?lightb
+  copy:
+    src: app.js
+    dest: /usr/lib/ambari-server/web/javascripts/app.js
+
+- name: 修改ambari metainfo.xml文件，禁用SMARTSENSE组件
+  #https://www.jianshu.com/p/122fea8005c7
+  copy:
+    src: metainfo.xml
+    dest: /var/lib/ambari-server/resources/stacks/HDP/3.0/services/SMARTSENSE/metainfo.xml
+
+- name: 拷贝mysql-connector-java-8.0.30.jar
+  copy:
+    src: mysql-connector-java-8.0.30.jar
+    dest: /usr/share/java/
+
+- name: 创建ambari数据库
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - CREATE DATABASE ambari;
+  when:
+    - STATE == "MASTER"
+
+- name: 初始化ambari数据库
+  # 如果使用mysql mgr模式，注意每张表必须都有主键
+  command:  mysql --login-path=local --database=ambari -e "{{ item }}"
+  with_items:
+    - source /opt/download/bigdata/roles/manager/files/Ambari-DDL-MySQL-CREATE.sql;
+  when:
+    - STATE == "MASTER"
+
+- name: 添加ambari password.dat文件
+  template: src=password.dat.j2 dest=/etc/ambari-server/conf/password.dat owner=root
+
+- name: 添加ambari ambari.properties文件
+  template: src=ambari.properties dest=/etc/ambari-server/conf/ambari.properties owner=root
+
+- name: 配置chk_mysql_master.sh #使用keepalived检测启停ambari-server
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf.j2
+    mode: 744
+
+- name: 启动keepalived服务
+  sudo: yes
+  service:
+    name: keepalived
+    state: restarted
+    enabled: true

@@ -1,0 +1,22 @@
+---
+- name: 解压nginx安装包
+  unarchive:
+    src: nginx.debs.tar.gz
+    dest: /opt/debs/
+
+- name: 更新mysql本地源
+  lineinfile:
+    dest: /etc/apt/sources.list.d/local.list
+    state: present
+    line: "deb [trusted=yes] file:/opt/debs nginx/"
+
+- name: 安装nginx
+  shell:
+    cmd: apt-get update && apt-get install -y nginx
+
+- name: 启动nginx服务
+  sudo: yes
+  service:
+    name: nginx
+    state: started
+    enabled: true

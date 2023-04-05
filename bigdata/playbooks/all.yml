@@ -1,0 +1,15 @@
+- hosts: all
+  roles:
+  - basis
+  - java
+
+- hosts: manager
+  roles:
+  - mysql
+  - keepalived
+  - nginx
+  - manager
+
+- hosts: work
+  roles:
+  - work

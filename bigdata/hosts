@@ -1,0 +1,20 @@
+# 远程服务器
+[manager]
+node001 ansible_ssh_host=192.168.26.192 ansible_ssh_port=22 ansible_ssh_pass=bigdata STATE=MASTER KEEPALIVED_PRIORITY=100
+node002 ansible_ssh_host=192.168.26.193 ansible_ssh_port=22 ansible_ssh_pass=bigdata STATE=BACKUP KEEPALIVED_PRIORITY=90
+[work]
+node003 ansible_ssh_host=192.168.26.193 ansible_ssh_port=22 ansible_ssh_pass=bigdata
+
+[all:vars]
+### --------- Main Variables ---------------
+# Java配置
+JAVA_HOME="/usr/local/java"
+
+# MySQL 配置
+MYSQL_PASSWORD="bigdata"
+MYSQL_MGR_MASTER="node001" #根据环境修改
+
+# Keepalived 配置
+KEEPALIVED_VRID="100" #根据环境修改
+KEEPALIVED_VIP="192.168.26.100" #根据环境修改
+KEEPALIVED_INTERFACE="ens33" #根据环境修改
