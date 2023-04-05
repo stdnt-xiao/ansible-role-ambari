@@ -35,7 +35,7 @@
 $ sh /opt/download/ansible/install_ansible.sh
 
 ### 配置免密
-$ sh ansible-playbook /opt/download/bigdata/playbooks/all.yml
+$ ansible-playbook /opt/download/bigdata/playbooks/all.yml
 ```
 ### 4.2 部署linkis+dss
 

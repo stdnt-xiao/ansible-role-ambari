@@ -2,5 +2,5 @@
 /ansible-role-ambari.iml
 /hdp/HDP-3.1.0.0-ubuntu18-deb.tar.gz
 /hdp/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
-*.debs.tar.gz
+ambari.debs.tar.gz
 /bigdata/roles/java/files/jdk-8u202-linux-x64.tar.gz
