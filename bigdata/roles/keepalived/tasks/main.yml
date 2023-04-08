@@ -18,10 +18,11 @@
   template:
     src: keepalived.conf.j2
     dest: /etc/keepalived/keepalived.conf
+    mode: 644
 
 - name: 配置check_mysql.sh
-  template:
-    src: chk_mysql.sh.j2
+  copy:
+    src: chk_mysql.sh
     dest: /etc/keepalived/chk_mysql.sh
     mode: 744
 

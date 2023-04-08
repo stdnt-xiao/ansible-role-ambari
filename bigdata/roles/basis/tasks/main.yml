@@ -18,6 +18,8 @@
     state: present
   with_items: "{{ groups.all }}"
 
+- name: "0.删除.ssh"
+  shell: rm -fr ~/.ssh/id_rsa
 - name: "1.初始化.ssh目录"
   file: 'path=~/.ssh state=absent'
 - name: "2.创建新的.ssh目录"

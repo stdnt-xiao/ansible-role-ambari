@@ -51,7 +51,7 @@ vrrp_instance vip_{{ KEEPALIVED_VRID }} {
     chk_mysql_master
   }
 
-  notify_master "/usr/sbin/ambari-server restart ; /usr/sbin/ambari-agent restart"
-  notify_backup "/usr/sbin/ambari-server stop ; /usr/sbin/ambari-agent restart"
+  notify_master "/etc/keepalived/start_server.sh"
+  notify_backup "/etc/keepalived/stop_server.sh"
 }
 

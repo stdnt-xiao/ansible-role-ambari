@@ -1,0 +1,10 @@
+---
+- name: 执行ambari manager
+  import_tasks: manager.yml
+  when:
+    "'manager' in group_names"
+
+- name: 执行ambari work
+  import_tasks: work.yml
+  when:
+      "'work' in group_names"

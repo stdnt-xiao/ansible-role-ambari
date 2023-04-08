@@ -2,14 +2,12 @@
   roles:
   - basis
   - java
-
 - hosts: manager
   roles:
   - mysql
   - keepalived
   - nginx
-  - manager
-
-- hosts: work
+- hosts: all
   roles:
-  - work
+  - ambari
+

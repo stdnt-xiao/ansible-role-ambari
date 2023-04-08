@@ -12,25 +12,22 @@
     path: "{{ item }}"
     state: directory
   with_items:
-    - /opt/download/hdp
     - /opt/repo
 
 - name: 拷贝hdp镜像源资源到其他节点
   copy:
     src: "{{ item }}"
-    dest: /opt/download/hdp/
+    dest: /opt/repo
   with_items:
-    - /opt/download/hdp/HDP-3.1.0.0-ubuntu18-deb.tar.gz
-    - /opt/download/hdp/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
-  when:
-    - STATE != "MASTER"
+    - HDP-3.1.0.0-ubuntu18-deb.tar.gz
+    - HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
 
 - name: 配置 ambari hdp镜像源
   shell:
     cmd: "{{ item }}"
   with_items:
-    - tar -zxvf /opt/download/hdp/HDP-3.1.0.0-ubuntu18-deb.tar.gz -C /opt/repo/
-    - tar -zxvf /opt/download/hdp/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
+    - tar -zxvf /opt/repo/HDP-3.1.0.0-ubuntu18-deb.tar.gz -C /opt/repo/
+    - tar -zxvf /opt/repo/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
 
 - name: 添加ambari password.dat文件
   template: src=nginx.hdp.conf.j2 dest=/etc/nginx/conf.d/hdp.conf owner=root
@@ -82,7 +79,7 @@
   # 如果使用mysql mgr模式，注意每张表必须都有主键
   command:  mysql --login-path=local --database=ambari -e "{{ item }}"
   with_items:
-    - source /opt/download/bigdata/roles/manager/files/Ambari-DDL-MySQL-CREATE.sql;
+    - source /opt/download/bigdata/roles/ambari/files/Ambari-DDL-MySQL-CREATE.sql;
   when:
     - STATE == "MASTER"
 
@@ -95,7 +92,19 @@
 - name: 配置chk_mysql_master.sh #使用keepalived检测启停ambari-server
   template:
     src: keepalived.conf.j2
-    dest: /etc/keepalived/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: 644
+
+- name: 配置start_server.sh #配置重启ambari-server脚本
+  copy:
+    src: start_server.sh
+    dest: /etc/keepalived/start_server.sh
+    mode: 744
+
+- name: 配置stop_server.sh #配置停止ambari-server脚本
+  copy:
+    src: stop_server.sh
+    dest: /etc/keepalived/stop_server.sh
     mode: 744
 
 - name: 启动keepalived服务
