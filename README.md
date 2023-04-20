@@ -14,7 +14,7 @@
 |   JDK  |  jdk1.8.0_202   |  /usr/local/java   |  java -version   |
 |   Nginx  |  nginx/1.20.1   |   /etc/nginx  |   nginx -t   |
 |  keepalived   |  keepalived/1.20.1   |   /etc/keepalived   |     |
-|  Ambari   |   2.7.5   |  /var/lib/ambari-server    |   http://<服务器IP>:8028   |
+|  Ambari   |   2.7.5   |  /var/lib/ambari-server    |   http://<服务器IP>:8080   |
 |  HDP   |  3.1.5    |     |     |
 
 ## 二、部署前注意事项
