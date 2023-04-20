@@ -7,27 +7,27 @@
     src: trusted.gpg
     dest: /etc/apt/trusted.gpg
 
-- name: 创建download文件夹
+- name: 创建/opt/repo文件夹
   file:
-    path: "{{ item }}"
+    path: "/opt/repo"
     state: directory
-  with_items:
-    - /opt/repo
 
 - name: 拷贝hdp镜像源资源到其他节点
   copy:
     src: "{{ item }}"
     dest: /opt/repo
   with_items:
-    - HDP-3.1.0.0-ubuntu18-deb.tar.gz
+    - HDP-3.1.5.0-ubuntu18-deb.tar.gz
     - HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
+    - HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz
 
 - name: 配置 ambari hdp镜像源
   shell:
     cmd: "{{ item }}"
   with_items:
-    - tar -zxvf /opt/repo/HDP-3.1.0.0-ubuntu18-deb.tar.gz -C /opt/repo/
+    - tar -zxvf /opt/repo/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /opt/repo/
     - tar -zxvf /opt/repo/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
+    - tar -zxvf /opt/repo/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /opt/repo/
 
 - name: 添加ambari password.dat文件
   template: src=nginx.hdp.conf.j2 dest=/etc/nginx/conf.d/hdp.conf owner=root
@@ -38,30 +38,33 @@
 
 - name: 解压ambari安装包
   unarchive:
-    src: ambari.debs.tar.gz
+    src: bigdata.debs.tar.gz
     dest: /opt/debs/
 
 - name: 配置环境变量
   lineinfile:
     dest: /etc/apt/sources.list.d/local.list
     state: present
-    line: "deb [trusted=yes] file:/opt/debs ambari/"
+    line: "{{ item }}"
+  with_items:
+    "deb [trusted=yes] file:/opt/debs bigdata/"
+    "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
 
 - name: 安装ambari
   shell:
     cmd: apt-get update && apt-get install -y ambari-server ambari-agent
 
-- name: 修改ambari app.js文件,解决ambari-hdp源为空的问题
-  #https://community.cloudera.com/t5/Community-Articles/ambari-2-7-3-Ambari-writes-Empty-baseurl-values-written-to/ta-p/249314?lightb
-  copy:
-    src: app.js
-    dest: /usr/lib/ambari-server/web/javascripts/app.js
-
-- name: 修改ambari metainfo.xml文件，禁用SMARTSENSE组件
-  #https://www.jianshu.com/p/122fea8005c7
-  copy:
-    src: metainfo.xml
-    dest: /var/lib/ambari-server/resources/stacks/HDP/3.0/services/SMARTSENSE/metainfo.xml
+#- name: 修改ambari app.js文件,解决ambari-hdp源为空的问题
+#  #https://community.cloudera.com/t5/Community-Articles/ambari-2-7-3-Ambari-writes-Empty-baseurl-values-written-to/ta-p/249314?lightb
+#  copy:
+#    src: app.js
+#    dest: /usr/lib/ambari-server/web/javascripts/app.js
+#
+#- name: 修改ambari metainfo.xml文件，禁用SMARTSENSE组件
+#  #https://www.jianshu.com/p/122fea8005c7
+#  copy:
+#    src: metainfo.xml
+#    dest: /var/lib/ambari-server/resources/stacks/HDP/3.0/services/SMARTSENSE/metainfo.xml
 
 - name: 拷贝mysql-connector-java-8.0.30.jar
   copy:
