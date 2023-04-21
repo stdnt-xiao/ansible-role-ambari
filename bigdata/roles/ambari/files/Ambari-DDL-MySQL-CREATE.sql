@@ -17,15 +17,14 @@
 --
 -- DROP DATABASE IF EXISTS `ambari`;
 -- DROP USER `ambari`;
---
--- delimiter ;
---
--- CREATE DATABASE `ambari` /*!40100 DEFAULT CHARACTER SET utf8 */;
---
--- CREATE USER 'ambari' IDENTIFIED BY 'bigdata';
---
--- -- USE @schema;
--- USE ambari;
+
+delimiter ;
+
+# CREATE DATABASE `ambari` /*!40100 DEFAULT CHARACTER SET utf8 */;
+#
+# CREATE USER 'ambari' IDENTIFIED BY 'bigdata';
+
+# USE @schema;
 
 -- Set default_storage_engine to InnoDB
 -- storage_engine variable should be used for versions prior to MySQL 5.6
@@ -36,6 +35,7 @@ set @engine_stmt = IF(@major >= 5 AND @minor>=6, 'SET default_storage_engine=INN
 prepare statement from @engine_stmt;
 execute statement;
 DEALLOCATE PREPARE statement;
+
 
 CREATE TABLE stack(
   stack_id BIGINT NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE clusterconfig (
 CREATE TABLE ambari_configuration (
   category_name VARCHAR(100) NOT NULL,
   property_name VARCHAR(100) NOT NULL,
-  property_value VARCHAR(2048),
+  property_value VARCHAR(4000),
   CONSTRAINT PK_ambari_configuration PRIMARY KEY (category_name, property_name));
 
 CREATE TABLE serviceconfig (
@@ -215,13 +215,13 @@ CREATE TABLE repo_definition (
 CREATE TABLE repo_tags (
   repo_definition_id BIGINT NOT NULL,
   tag VARCHAR(255) NOT NULL,
-  CONSTRAINT PK_repo_tag_id PRIMARY KEY (repo_definition_id),
+  CONSTRAINT PK_repo_tags_repo_definition_id PRIMARY KEY (repo_definition_id),
   CONSTRAINT FK_repo_tag_definition_id FOREIGN KEY (repo_definition_id) REFERENCES repo_definition (id));
 
 CREATE TABLE repo_applicable_services (
   repo_definition_id BIGINT NOT NULL,
   service_name VARCHAR(255) NOT NULL,
-  CONSTRAINT PK_repo_applicable_services_id PRIMARY KEY (repo_definition_id),
+  CONSTRAINT PK_repo_applicable_services_repo_definition_id PRIMARY KEY (repo_definition_id),
   CONSTRAINT FK_repo_app_service_def_id FOREIGN KEY (repo_definition_id) REFERENCES repo_definition (id));
 
 CREATE TABLE servicecomponentdesiredstate (
@@ -1511,7 +1511,7 @@ INSERT INTO adminprivilege (privilege_id, permission_id, resource_id, principal_
   (1, 1, 1, 1);
 
 INSERT INTO metainfo(metainfo_key, metainfo_value) VALUES
-  ('version','2.7.3');
+  ('version','2.7.5');
 
 -- Quartz tables
 

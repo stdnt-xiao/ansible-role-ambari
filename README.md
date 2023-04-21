@@ -43,7 +43,7 @@ HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
 ### 3.3 构建bigdata（ambari、hdp）互联网依赖包
 ```bash
 # 缓存bigdata（ambari、hdp）互联网依赖包
-$ bash /opt/ansible-role-ambari/utils/build_bigdata_debs.sh
+$ bash /opt/ansible-role-ambari/build_bigdata_debs.sh
 ```
 ## 四、私有化部署方法
 ```text

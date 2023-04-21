@@ -1,13 +1,12 @@
 # 使用python启动临时http服务
-mkdir /opt/repo/
-cd /opt/repo
-nohup python3 -mhttp.server 80 &
+apt-get install -y apache2
+rm -fr /var/www/html/index.html
 
 # 解压文件到/opt/repo/目录
-tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/ambari-2.7.5.0-ubuntu18.tar.gz -C /opt/repo/
-tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /opt/repo/
-tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /opt/repo/
-tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
+tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/ambari-2.7.5.0-ubuntu18.tar.gz -C /var/www/html/
+tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /var/www/html/
+tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /var/www/html/
+tar -zxvf /opt/ansible-role-ambari/bigdata/roles/ambari/files/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /var/www/html/
 
 # 配置ambari、hdp软件源
 cat >/etc/apt/sources.list.d/local.list <<EOF
@@ -21,13 +20,14 @@ apt-get update
 
 # 清空apt临时缓存目录
 ps -ef | grep apt | grep systemd.daily | awk '{print $2}' |xargs kill -9
-sudo rm /var/lib/dpkg/lock-frontend
-sudo rm /var/lib/dpkg/lock
-sudo rm /var/cache/apt/archives/lock
+rm /var/lib/dpkg/lock-frontend
+rm /var/lib/dpkg/lock
+rm /var/cache/apt/archives/lock
 rm -rf /var/cache/apt/archives/*
 
 # 安装并缓存所有deb文件依赖
-ls -l -R /opt/repo/ | grep deb | awk '{split($9, array, "_");print array[1]}' | xargs apt-get -d -y install
+apt-get -d -y install unzip apache2
+ls -l -R /var/www/html/ | grep deb | awk '{split($9, array, "_");print array[1]}' | xargs apt-get -d -y install
 
 # 拷贝互联网依赖包(除ambari、hdp外)，生成离线debs包
 mkdir -p /var/cache/apt/archives/bigdata

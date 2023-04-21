@@ -12,8 +12,8 @@
     state: present
     line: "{{ item }}"
   with_items:
-      "deb [trusted=yes] file:/opt/debs bigdata/"
-      "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
+    - "deb [trusted=yes] file:/opt/debs bigdata/"
+    - "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
 
 - name: 安装ambari-agent
   shell:

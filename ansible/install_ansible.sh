@@ -6,7 +6,7 @@ sudo rm /var/cache/apt/archives/lock
 
 #解压文档
 mkdir -p /opt/debs/
-tar -zxvf /opt/download/ansible/debs/ansible.debs.tar.gz -C /opt/debs/
+tar -zxvf /opt/ansible-role-ambari/ansible/debs/ansible.debs.tar.gz -C /opt/debs/
 
 #配置本地软件源
 mv /etc/apt/sources.list /etc/apt/sources.list.bk

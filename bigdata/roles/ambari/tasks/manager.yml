@@ -17,14 +17,16 @@
     src: "{{ item }}"
     dest: /opt/repo
   with_items:
-    - HDP-3.1.5.0-ubuntu18-deb.tar.gz
+    - ambari-2.7.5.0-ubuntu18.tar.gz
     - HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
     - HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz
+    - HDP-3.1.5.0-ubuntu18-deb.tar.gz
 
 - name: 配置 ambari hdp镜像源
   shell:
     cmd: "{{ item }}"
   with_items:
+    - tar -zxvf /opt/repo/ambari-2.7.5.0-ubuntu18.tar.gz -C /opt/repo/
     - tar -zxvf /opt/repo/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /opt/repo/
     - tar -zxvf /opt/repo/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
     - tar -zxvf /opt/repo/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /opt/repo/
@@ -47,24 +49,18 @@
     state: present
     line: "{{ item }}"
   with_items:
-    "deb [trusted=yes] file:/opt/debs bigdata/"
-    "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
+    - "deb [trusted=yes] file:/opt/debs bigdata/"
+    - "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
 
 - name: 安装ambari
   shell:
     cmd: apt-get update && apt-get install -y ambari-server ambari-agent
 
-#- name: 修改ambari app.js文件,解决ambari-hdp源为空的问题
-#  #https://community.cloudera.com/t5/Community-Articles/ambari-2-7-3-Ambari-writes-Empty-baseurl-values-written-to/ta-p/249314?lightb
-#  copy:
-#    src: app.js
-#    dest: /usr/lib/ambari-server/web/javascripts/app.js
-#
-#- name: 修改ambari metainfo.xml文件，禁用SMARTSENSE组件
-#  #https://www.jianshu.com/p/122fea8005c7
-#  copy:
-#    src: metainfo.xml
-#    dest: /var/lib/ambari-server/resources/stacks/HDP/3.0/services/SMARTSENSE/metainfo.xml
+- name: 删除，修改ambari metainfo.xml文件，禁用SMARTSENSE组件
+  lineinfile:
+    dest:  /var/lib/ambari-server/resources/stacks/HDP/3.0/services/SMARTSENSE/metainfo.xml
+    state: absent
+    regexp: '.*<selection>MANDATORY</selection>.*'
 
 - name: 拷贝mysql-connector-java-8.0.30.jar
   copy:
@@ -82,7 +78,7 @@
   # 如果使用mysql mgr模式，注意每张表必须都有主键
   command:  mysql --login-path=local --database=ambari -e "{{ item }}"
   with_items:
-    - source /opt/download/bigdata/roles/ambari/files/Ambari-DDL-MySQL-CREATE.sql;
+    - source /opt/ansible-role-ambari/bigdata/roles/ambari/files/Ambari-DDL-MySQL-CREATE.sql;
   when:
     - STATE == "MASTER"
 
@@ -90,7 +86,7 @@
   template: src=password.dat.j2 dest=/etc/ambari-server/conf/password.dat owner=root
 
 - name: 添加ambari ambari.properties文件
-  template: src=ambari.properties dest=/etc/ambari-server/conf/ambari.properties owner=root
+  template: src=ambari.properties.j2 dest=/etc/ambari-server/conf/ambari.properties owner=root
 
 - name: 配置chk_mysql_master.sh #使用keepalived检测启停ambari-server
   template:
