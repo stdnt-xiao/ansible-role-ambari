@@ -1,3 +1,0 @@
-- hosts: manager
-  roles:
-  - nginx

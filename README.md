@@ -12,7 +12,6 @@
 |-----|-----|-----|-----|
 |   MySQL  |  mysql-5.7   |   /usr/local/mysql   |  mysql -pbigdata |
 |   JDK  |  jdk1.8.0_202   |  /usr/local/java   |  java -version   |
-|   Nginx  |  nginx/1.20.1   |   /etc/nginx  |   nginx -t   |
 |  keepalived   |  keepalived/1.20.1   |   /etc/keepalived   |     |
 |  Ambari   |   2.7.5   |  /var/lib/ambari-server    |   http://<服务器IP>:8080   |
 |  HDP   |  3.1.5    |     |     |
@@ -60,10 +59,10 @@ ansible-role-ambari
 ```
 ### 4.2 配置部署主机（注：ansible_ssh_host的值不能设置127.0.0.1）
 ```bash
-### 安装ansible
+### 安装ansible（所有节点均需执行，需拷贝/opt/ansible-role-ambari/ansible到所有服务器）
 $ bash /opt/ansible-role-ambari/ansible/install_ansible.sh
 
-### 修改全局配置文件
+### 修改全局配置文件（单主节点）
 $ vim hosts
 # 远程服务器
 [manager]
@@ -86,7 +85,7 @@ KEEPALIVED_VRID="100" #根据环境修改
 KEEPALIVED_VIP="192.168.26.100" #根据环境修改
 KEEPALIVED_INTERFACE="ens33" #根据环境修改
 
-### 部署ambari集群
+### 部署ambari集群（单主节点）
 $ cd /opt/ansible-role-ambari
 $ ansible-playbook playbooks/all.yml
 ```

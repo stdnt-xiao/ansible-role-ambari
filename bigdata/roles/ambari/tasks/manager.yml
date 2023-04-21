@@ -7,15 +7,18 @@
     src: trusted.gpg
     dest: /etc/apt/trusted.gpg
 
-- name: 创建/opt/repo文件夹
-  file:
-    path: "/opt/repo"
-    state: directory
+- name: 安装apache2文件服务
+  shell:
+    cmd: apt-get install -y apache2
 
-- name: 拷贝hdp镜像源资源到其他节点
+- name: 删除文件服务默认页面
+  shell:
+    cmd: rm -fr /var/www/html/index.html
+
+- name: 拷贝hdp镜像源资源到其他节点（大文件压缩拷贝，比unarchive效率高）
   copy:
     src: "{{ item }}"
-    dest: /opt/repo
+    dest: /var/www/html/
   with_items:
     - ambari-2.7.5.0-ubuntu18.tar.gz
     - HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
@@ -26,17 +29,10 @@
   shell:
     cmd: "{{ item }}"
   with_items:
-    - tar -zxvf /opt/repo/ambari-2.7.5.0-ubuntu18.tar.gz -C /opt/repo/
-    - tar -zxvf /opt/repo/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /opt/repo/
-    - tar -zxvf /opt/repo/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /opt/repo/
-    - tar -zxvf /opt/repo/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /opt/repo/
-
-- name: 添加ambari password.dat文件
-  template: src=nginx.hdp.conf.j2 dest=/etc/nginx/conf.d/hdp.conf owner=root
-
-- name: 配置 ambari hdp镜像源
-  shell:
-    cmd: nginx -s reload
+    - tar -zxvf /var/www/html/ambari-2.7.5.0-ubuntu18.tar.gz -C /var/www/html/
+    - tar -zxvf /var/www/html/HDP-3.1.5.0-ubuntu18-deb.tar.gz -C /var/www/html/
+    - tar -zxvf /var/www/html/HDP-UTILS-1.1.0.22-ubuntu18.tar.gz -C /var/www/html/
+    - tar -zxvf /var/www/html/HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz -C /var/www/html/
 
 - name: 解压ambari安装包
   unarchive:
