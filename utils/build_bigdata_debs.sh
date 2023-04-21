@@ -1,4 +1,3 @@
-#!/bin/bash
 # 使用python启动临时http服务
 mkdir /opt/repo/
 cd /opt/repo
