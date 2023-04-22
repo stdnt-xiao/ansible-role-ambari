@@ -1,0 +1,29 @@
+---
+- name: 安装keepalived
+  shell:
+    cmd: apt-get install -y keepalived
+
+- name: 配置 keepalived
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: 644
+
+- name: 配置check_mysql.sh
+  copy:
+    src: chk_mysql.sh
+    dest: /etc/keepalived/chk_mysql.sh
+    mode: 744
+
+- name: 配置chk_mysql_master.sh
+  template:
+    src: chk_mysql_master.sh.j2
+    dest: /etc/keepalived/chk_mysql_master.sh
+    mode: 744
+
+- name: 启动keepalived服务
+  sudo: yes
+  service:
+    name: keepalived
+    state: started
+    enabled: true

@@ -1,0 +1,32 @@
+---
+#TODO
+#yarn 53端口冲突
+- name: 添加hdp apt认证文件
+  copy:
+    src: trusted.gpg
+    dest: /etc/apt/trusted.gpg.d/trusted.gpg
+
+- name: 配置环境变量
+  lineinfile:
+    dest: /etc/apt/sources.list.d/ambari.list
+    state: present
+    create: yes
+    line: "deb [trusted=yes] http://{{ KEEPALIVED_VIP }}/ambari/ubuntu18/2.7.5.0-72/ Ambari main"
+
+- name: 执行ambari manager
+  import_tasks: manager.yml
+  when:
+    "'manager' in group_names"
+
+- name: 安装ambari-agent
+  shell:
+    cmd: apt-get update && apt-get install -y ambari-agent
+
+- name: 打印访问信息
+  debug:
+    msg:
+      - "*****************************************************************"
+      - "             访问 http://{{ KEEPALIVED_VIP }}:8080 查看访问信息               "
+      - "*****************************************************************"
+  when:
+    - STATE == "MASTER"

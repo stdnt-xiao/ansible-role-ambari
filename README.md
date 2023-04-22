@@ -29,20 +29,19 @@ $ cd /opt/
 $ git clone https://github.com/stdnt-xiao/ansible-role-ambari.git
 ```
 ### 3.2 下载ambari及hdp包
-若没有下列文件，可以添加微信获取（create17_）
+若没有下列文件，可以添加微信（create17_）获取
 ```
 # 目标目录
-/opt/ansible-role-ambari/bigdata/roles/ambari/files
+/opt/ansible-role-ambari/
 # 文件列表
 ambari-2.7.5.0-ubuntu18.tar.gz
 HDP-3.1.5.0-ubuntu18-deb.tar.gz
 HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz
 HDP-UTILS-1.1.0.22-ubuntu18.tar.gz
 ```
-### 3.3 构建bigdata（ambari、hdp）互联网依赖包
+### 3.3 缓存ambari、hdp安装依赖
 ```bash
-# 缓存bigdata（ambari、hdp）互联网依赖包
-$ bash /opt/ansible-role-ambari/build_bigdata_debs.sh
+$ bash /opt/ansible-role-ambari/build_local_debs.sh
 ```
 ## 四、私有化部署方法
 ```text
@@ -51,25 +50,34 @@ $ bash /opt/ansible-role-ambari/build_bigdata_debs.sh
 ```
 ### 4.1 目录说明
 ```text
-ansible-role-ambari
-├── ansible    # ansible 配置文件
-├── bigdata    # 大数据主机及变量配置
-├── utils      # bigdata（ambari、hdp）互联网依赖包制作工具
-├── README.md  # 说明文档
+/opt/ansible-role-ambari
+    ├── playbooks             # ansible剧本
+    ├── roles                 # ansible角色
+    ├── .gitignore            # git忽略上传文件清单
+    ├── ansible.cfg           # ansible配置文件
+    ├── build_local_debs.sh   # 离线包构建脚本
+    ├── hosts                 # ansible部署环境变量
+    ├── install_ansible.sh    # 安装ansible
+    ├── LICENSE               # 开源协议
+    ├── README.md             # 说明文档
+    ├── ambari-2.7.5.0-ubuntu18.tar.gz       # ambari软件包，自行下载
+    ├── HDP-3.1.5.0-ubuntu18-deb.tar.gz      # hdp软件包，自行下载
+    ├── HDP-GPL-3.1.5.0-ubuntu18-gpl.tar.gz  # hdp软件包，自行下载
+    ├── HDP-UTILS-1.1.0.22-ubuntu18.tar.gz   # hdp软件包，自行下载
 ```
-### 4.2 配置部署主机（注：ansible_ssh_host的值不能设置127.0.0.1）
+### 4.2 配置部署主机
 ```bash
-### 安装ansible（所有节点均需执行，需拷贝/opt/ansible-role-ambari/ansible到所有服务器）
-$ bash /opt/ansible-role-ambari/ansible/install_ansible.sh
+### 安装ansible
+$ bash /opt/ansible-role-ambari/install_ansible.sh
 
-### 修改全局配置文件（单主节点）
+### 修改全局配置文件
 $ vim hosts
 # 远程服务器
 [manager]
-node001 ansible_ssh_host=192.168.26.192 ansible_ssh_port=22 ansible_ssh_pass=bigdata STATE=MASTER KEEPALIVED_PRIORITY=100
-node002 ansible_ssh_host=192.168.26.193 ansible_ssh_port=22 ansible_ssh_pass=bigdata STATE=BACKUP KEEPALIVED_PRIORITY=90
+node001 ansible_ssh_host=192.168.26.192 ansible_ssh_port=22 ansible_ssh_pass=bigdata ansible_python_interpreter=/usr/bin/python3 STATE=MASTER KEEPALIVED_PRIORITY=100
+node002 ansible_ssh_host=192.168.26.193 ansible_ssh_port=22 ansible_ssh_pass=bigdata ansible_python_interpreter=/usr/bin/python3 STATE=BACKUP KEEPALIVED_PRIORITY=90
 [work]
-node003 ansible_ssh_host=192.168.26.194 ansible_ssh_port=22 ansible_ssh_pass=bigdata
+node003 ansible_ssh_host=192.168.26.194 ansible_ssh_port=22 ansible_ssh_pass=bigdata ansible_python_interpreter=/usr/bin/python3
 
 [all:vars]
 ### --------- Main Variables ---------------
@@ -84,19 +92,19 @@ MYSQL_MGR_MASTER="node001" #根据环境修改
 KEEPALIVED_VRID="100" #根据环境修改
 KEEPALIVED_VIP="192.168.26.100" #根据环境修改
 KEEPALIVED_INTERFACE="ens33" #根据环境修改
-
-### 部署ambari集群（单主节点）
-$ cd /opt/ansible-role-ambari
-$ ansible-playbook playbooks/all.yml
 ```
 ```
 TASK [dss : 打印访问信息] *****************************************************************************************
 ok: [node01] => {
     "msg": [
         "*****************************************************************", 
-        "              访问 http://192.168.26.192:8080 查看访问信息                 ", 
+        "              访问 http://192.168.26.100:8080 查看访问信息                 ", 
         "*****************************************************************"
     ]
 }
 ```
-执行结束后，即可访问：http://192.168.26.192:8080 查看信息页面，上面记录了所有服务的访问地址及账号密码。
+执行结束后，即可访问：http://1192.168.26.100:8080 查看信息页面，上面记录了所有服务的访问地址及账号密码。
+### HDP组件清单文件
+```text
+/var/www/html/HDP/ubuntu18/3.1.5.0-152/HDP-3.1.5.0-152.xml
+```

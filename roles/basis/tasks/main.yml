@@ -1,0 +1,77 @@
+- name: 删除hosts
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '^127.*'
+
+- name: 删除hosts
+  lineinfile:
+    dest:  /etc/hosts
+    state: absent
+    regexp: '.*\:\:.*'
+
+- name: 添加 hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_ssh_host }} {{item}}"
+    state: present
+  with_items: "{{ groups.all }}"
+
+- name: 修改主机名
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: "0.删除.ssh"
+  shell: rm -fr ~/.ssh/id_rsa
+- name: "1.初始化.ssh目录"
+  file: 'path=~/.ssh state=absent'
+- name: "2.创建新的.ssh目录"
+  file: 'path=~/.ssh/ state=directory owner=root group=root mode=700 force=yes'
+- name: "3.生成新的公钥和私钥"
+  shell: ssh-keygen -t rsa -b 2048 -P "" -f ~/.ssh/id_rsa
+- name: "4.拷贝远程公钥到本机"
+  fetch: src=~/.ssh/id_rsa.pub dest=~/.ssh/rsa/ force=yes
+- name: "5.同步证书到其他主机"
+  copy: src=~/.ssh/rsa dest=~/.ssh/ mode=0644
+- name: "6.合并密钥"
+  shell: cat ~/.ssh/rsa/*/root/.ssh/id_rsa.pub > ~/.ssh/authorized_keys
+- name: "7.修改authorized_keys权限为600"
+  shell: chmod 600 ~/.ssh/authorized_keys
+- name: "8.添加known_hosts"
+  shell: ssh-keyscan {{item}} >> ~/.ssh/known_hosts
+  with_items: "{{play_hosts}}"
+- name: "9. 修改.ssh目录下文件用户组与用户均为root"
+  shell: chown -R root:root ~/.ssh/
+- name: "10.清理临时数据"
+  shell: rm -rf  ~/.ssh/rsa && echo "结束"
+
+- name: 创建/opt/ansible-role-ambari/目录
+  file:
+    path: /opt/debs/
+    state: directory
+
+- name: 解压本地离线安装包
+  unarchive:
+    src: /opt/ansible-role-ambari/local.debs.tar.gz
+    dest: /opt/debs/
+
+- name: 判断文件是否存在
+  stat:
+    path: /etc/apt/sources.list
+  register: stat_result
+
+- name: 移出默认软件源
+  command: mv /etc/apt/sources.list /etc/apt/sources.list.bk
+  when: stat_result.stat.exists == True
+
+- name: 更新软件源配置文件
+  lineinfile:
+    dest: /etc/apt/sources.list.d/local.list
+    state: present
+    create: yes
+    line: "deb [trusted=yes] file:/opt/debs local/"
+
+- name: 更新软件源
+  shell:
+    cmd: apt-get update

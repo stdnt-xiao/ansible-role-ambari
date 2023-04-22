@@ -1,0 +1,99 @@
+---
+- name: 安装mysql
+  shell:
+    cmd: apt-get install -y mysql-server-5.7 mysql-client-5.7 python3-mysqldb
+
+- name: 解压mysql plugin
+  unarchive:
+    src: mysql.plugin.5.7.tar.gz
+    dest: /usr/lib/mysql/
+
+- name: 配置my.cnf
+  template: src=my.cnf.j2 dest=/etc/mysql/my.cnf owner=root
+
+- name: 启动mysql服务
+  sudo: yes
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: 修改mysql密码
+  sudo: yes
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ MYSQL_PASSWORD }}"
+    login_user: root
+    login_password: "{{ MYSQL_PASSWORD }}"
+    check_implicit_admin: yes
+    priv: "*.*:ALL,GRANT"
+  with_items:
+    - "{{ ansible_hostname }}"
+    - localhost
+
+- name: 配置本地密码
+  expect:
+    command: mysql_config_editor set --login-path=local --host=localhost --user=root --password
+    responses:
+      'Enter password:': "{{MYSQL_PASSWORD}}"
+
+- name: 修改root用户支持远程访问
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - grant all privileges on *.* to 'root'@'%' identified by '{{ MYSQL_PASSWORD }}' with grant option;
+    - flush privileges;
+
+- name: 创建repl用户
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - SET SQL_LOG_BIN=0;
+    - CREATE USER 'repl'@'%' IDENTIFIED BY '{{ MYSQL_PASSWORD }}' REQUIRE SSL;
+    - GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+    - FLUSH PRIVILEGES;
+
+- name: 重启mysql服务
+  sudo: yes
+  service:
+    name: mysql
+    state: restarted
+    enabled: true
+
+- name: 安装group_replication.so插件
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - CHANGE MASTER TO MASTER_USER='repl', MASTER_PASSWORD='{{ MYSQL_PASSWORD }}' FOR CHANNEL 'group_replication_recovery';
+    - INSTALL PLUGIN group_replication SONAME 'group_replication.so';
+    - SHOW PLUGINS;
+
+- name: 主节点启动mgr插件并创建数据库
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - SET GLOBAL group_replication_bootstrap_group=ON;
+    - START GROUP_REPLICATION;
+    - SET GLOBAL group_replication_bootstrap_group=OFF;
+    - SELECT * FROM performance_schema.replication_group_members;
+    - CREATE DATABASE playground;
+    - CREATE TABLE playground.equipment ( id INT NOT NULL AUTO_INCREMENT,type VARCHAR(50),quant INT,color VARCHAR(25),PRIMARY KEY(id));
+    - INSERT INTO playground.equipment (type, quant, color) VALUES ('slide', 2, 'blue');
+    - SELECT * FROM playground.equipment;
+  when:
+    - STATE == "MASTER"
+
+- name: 从节点启动mgr插件
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - START GROUP_REPLICATION;
+  when:
+    - STATE != "MASTER"
+
+- name: 主节点验证状态
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - SELECT * FROM performance_schema.replication_group_members;
+    - SELECT * FROM playground.equipment;
+    - SHOW STATUS LIKE '%primary%';
+  when:
+    - STATE == "MASTER"
+
+# 迁移 mgr mysql 主节点，STOP GROUP_REPLICATION;

@@ -1,0 +1,11 @@
+- hosts: all
+  roles:
+  - basis
+  - java
+- hosts: manager
+  roles:
+  - mysql
+  - keepalived
+- hosts: all
+  roles:
+  - ambari
