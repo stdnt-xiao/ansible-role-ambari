@@ -1,6 +1,4 @@
 ---
-#TODO
-#yarn 53端口冲突
 - name: 添加hdp apt认证文件
   copy:
     src: trusted.gpg
@@ -17,6 +15,10 @@
   import_tasks: manager.yml
   when:
     "'manager' in group_names"
+
+- name: 安装unzip
+  shell:
+    cmd: apt-get update && apt-get install -y unzip
 
 - name: 安装ambari-agent
   shell:

@@ -62,6 +62,21 @@
   when:
     - STATE == "MASTER"
 
+- name: 创建hive数据库
+  command:  mysql --login-path=local -e "{{ item }}"
+  with_items:
+    - CREATE DATABASE hive;
+  when:
+    - STATE == "MASTER"
+
+- name: 初始化hive数据库
+  # 如果使用mysql mgr模式，注意每张表必须都有主键
+  command:  mysql --login-path=local --database=hive -e "{{ item }}"
+  with_items:
+    - source /opt/ansible-role-ambari/roles/ambari/files/hive-schema-3.1.1000.mysql.sql;
+  when:
+    - STATE == "MASTER"
+
 - name: 添加ambari password.dat文件
   template: src=password.dat.j2 dest=/etc/ambari-server/conf/password.dat owner=root
 

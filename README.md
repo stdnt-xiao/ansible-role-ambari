@@ -108,3 +108,9 @@ ok: [node01] => {
 ```text
 /var/www/html/HDP/ubuntu18/3.1.5.0-152/HDP-3.1.5.0-152.xml
 ```
+## 五、部署注意事项
+1、部署hadoop时注意避免53端口冲突
+```text
+#yarn 53端口冲突 修改为8053
+#"hadoop.registry.dns.bind-port". (registry.dns.bind-port) default value = 53
+```

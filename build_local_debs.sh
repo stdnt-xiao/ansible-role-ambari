@@ -30,6 +30,8 @@ apt-get update
 
 # 缓存所有deb文件依赖
 cd /var/cache/apt/archives/
+apt-get download $(apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances apache2 | grep "^\w" | sort -u)
+apt-get download $(apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances ambari-server | grep "^\w" | sort -u)
 apt-get -d -y install unzip apache2 ansible keepalived mysql-server-5.7 mysql-client-5.7 sshpass python3-mysqldb python-pexpect
 ls -l -R /var/www/html/ | grep deb | awk '{split($9, array, "_");print array[1]}' | xargs apt-get -d -y install
 
